@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Trim Galore auto-detection, processing, and FastQC script
+# Trim Galore auto-detection, processing, and integrated FastQC script
 
 single_end_files=()
 paired_end_files=()
@@ -18,16 +18,15 @@ done
 for file in "${paired_end_files[@]}"; do
     echo "Processing paired-end files: $file and ${file/R1/R2}"
     output_prefix="${file%%_R1.fastq.gz}"
-    trim_galore --paired -j 4 "$file" "${file/R1/R2}" 2> "${output_prefix}_trim_galore.log"
-    fastqc "${output_prefix}_R1_val_1.fq.gz" "${output_prefix}_R2_val_2.fq.gz"
+    trim_galore --paired --fastqc -j 4 "$file" "${file/R1/R2}" 2> "${output_prefix}_trim_galore.log"
 done
 
 # Process single-end files
 for file in "${single_end_files[@]}"; do
     echo "Processing single-end file: $file"
     output_prefix="${file%%_R1.fastq.gz}"
-    trim_galore -j 4 "$file" 2> "${output_prefix}_trim_galore.log"
-    fastqc "${output_prefix}_trimmed.fq.gz"
+    trim_galore --fastqc -j 4 "$file" 2> "${output_prefix}_trim_galore.log"
 done
 
 echo "All files processed."
+
