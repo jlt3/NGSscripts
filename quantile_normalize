@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# check if any argument is provided
+if [ $# -eq 0 ]
+  then
+    echo "No arguments supplied. You must provide at least one bedgraph file."
+    exit 1
+fi
+
+# call the R script with the provided bedgraph files
+Rscript ~/bin/Rscript/quantile_normalize.R "$@"

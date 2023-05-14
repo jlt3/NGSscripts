@@ -1,0 +1,3 @@
+#!/bin/bash
+
+ls *_T_*.bg | xargs -I {} -P 10 Rscript ~/bin/Rscript/scale.R {}

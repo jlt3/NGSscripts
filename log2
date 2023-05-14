@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# Function to process *_E_*NAfilter.bg and *_L_*NAfilter.bg files
+process_files() {
+    EBG="$1"
+    LBG="${EBG/_E_/_L_}"
+    OUTPUT="${EBG/_E_/_T_}"
+    paste "$EBG" "$LBG" | awk '{if($4 != "NA" && $8 != "NA" && $8 != 0){print $1,$2,$3,log($4/$8)/log(2)} else {print $1,$2,$3,"NA"}}' OFS='\t' > "$OUTPUT"
+}
+
+
+export -f process_files
+
+find . -type f -name "*_E_*.bg" \
+| xargs -P 8 -I {} sh -c 'process_files "{}"'
+

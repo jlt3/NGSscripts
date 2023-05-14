@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# Function to process single-end reads
+process_single_end() {
+    input_file="$1"
+    output_file="${input_file%_R1_trimmed.fq.gz}_129cas_retainduplicates.bam"
+
+    bowtie2 --end-to-end --no-mixed --no-discordant \
+            -p 5 -X 1000 -x ~/genomes/129cas/129cas \
+            -U "$input_file" \
+        | samtools view -@ 5 -b -q 20 - \
+        | samtools sort -@ 5 -n - \
+        | samtools fixmate -r -m - - \
+	> "$output_file"
+}
+# Function to process paired-end reads
+process_paired_end() {
+    input_file="$1"
+    output_file="${input_file%_R1_val_1.fq.gz}_129cas_retainduplicates.bam"
+
+    bowtie2 --end-to-end --no-mixed --no-discordant \
+            -p 5 -X 1000 -x ~/genomes/129cas/129cas \
+            -1 "$input_file" -2 "${input_file/R1_val_1/R2_val_2}" \
+        | samtools view -@ 5 -b -q 20 - \
+        | samtools sort -@ 5 -n - \
+        | samtools fixmate -r -m - - \
+	> "$output_file"
+}
+
+export -f process_single_end
+export -f process_paired_end
+
+# Process single-end and paired-end reads in parallel
+find . -maxdepth 1 -type f \( -name "*_R1_trimmed.fq.gz" -o -name "*_R1_val_1.fq.gz" \) \
+| xargs -I{} -P 2 -n 1 sh -c 'if [[ "{}" =~ "_R1_trimmed.fq.gz" ]]; then process_single_end "{}"; else process_paired_end "{}"; fi'
+
+# Haplotype phase 129 and cas alleles
+find . -maxdepth 1 -type f -name "*129cas_retainduplicates.bam" | xargs -I {} -P 4 bash -c 'snpsplit --no_sort --snp_file ~/genomes/129cas/129cas_SNPs.txt {}'

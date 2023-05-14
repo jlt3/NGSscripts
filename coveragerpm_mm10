@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# Function to process BED files
+coveragerpm() {
+    bed_file="$1"
+    x=$(wc -l "$bed_file" | cut -d' ' -f 1)
+    bedtools genomecov -bg -strand + -i $bed_file -g ~/genomes/mm10/mm10.chrom.sizes \
+    | awk -v x=$x 'BEGIN{OFS="\t"} {rpm=$4; if (rpm>0) rpm*=1e+06/x; print $1,$2,$3,rpm}' > "${bed_file%.bed}_coverage_pos.bg"
+    bedtools genomecov -bg -strand - -i $bed_file -g ~/genomes/mm10/mm10.chrom.sizes \
+    | awk -v x=$x 'BEGIN{OFS="\t"} {rpm=$4; if (rpm>0) rpm*=1e+06/x; print $1,$2,$3,rpm}' > "${bed_file%.bed}_coverage_min.bg"
+}
+
+export -f coveragerpm
+
+# Find all .bed files in the current directory and process them in parallel using the coveragerpm function
+ls *.bed | xargs -n 1 -P 8 -I {} bash -c 'coveragerpm "$@"' _ {}

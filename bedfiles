@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# BAM to BED conversion and sorting script
+
+bedfiles() {
+    bamfile="$1"
+    bedfile="${bamfile%.bam}.bed"
+    echo "Converting $bamfile to $bedfile"
+    bedtools bamtobed -i "$bamfile" | sort -k 1,1 -k2,2n -T ~/tmp > "$bedfile"
+    echo "$bamfile to $bedfile conversion complete"
+}
+export -f bedfiles
+
+find . -maxdepth 1 -type f -name "*.bam" \
+| xargs -P 10 -I {} bash -c 'bedfiles "{}"'
+

@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# Function to process single-end files
+trim_single_end() {
+    file="$1"
+    echo "Processing single-end file: $file"
+    output_prefix="${file%%_R1.fastq.gz}"
+    trimgalore --fastqc -j 4 "$file" 2> "${output_prefix}_trim_galore.log"
+    echo "Trimming complete for: $file"
+}
+
+
+# Function to process paired-end files
+trim_paired_end() {
+    file="$1"
+    echo "Processing paired-end files: $file and ${file/R1/R2}"
+    output_prefix="${file%%_R1.fastq.gz}"
+    trimgalore --paired --fastqc -j 4 "$file" "${file/R1/R2}" 2> "${output_prefix}_trim_galore.log"
+    echo "Trimming complete for: $file and ${file/R1/R2}"
+}
+
+export -f trim_single_end
+export -f trim_paired_end
+
+# Process single-end and paired-end files in parallel
+find . -maxdepth 1 -type f -name "*R1.fastq.gz" \
+| xargs -I{} -P 4 -n 1 sh -c 'file="${1}"; file_prefix="${file%%_R1.fastq.gz}"; if [[ -e "${file_prefix}_R2.fastq.gz" ]]; then trim_paired_end "${file}"; else trim_single_end "${file}"; fi' _ {}
+
+echo "All files processed."
+

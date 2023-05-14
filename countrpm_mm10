@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# Function to process BED files
+countrpm() {
+    bed_file="$1"
+    x=$(wc -l "$bed_file" | cut -d' ' -f 1)
+    bedtools intersect -sorted -c -b "$bed_file" -a ~/genomes/mm10/mm10_sort_50kb.bed \
+    | awk -v x=$x '{if ($4 == 0 || $4*1e+06/x < 1) {print $1,$2,$3,"NA"} else {rpm=$4*1e+06/x; print $1,$2,$3,rpm}}' OFS='\t' \
+    > "${bed_file%.bed}_50kb.bg"
+}
+
+export -f countrpm
+
+ls *.bed | xargs -P 10 -I {} bash -c 'countrpm "{}"'
+
